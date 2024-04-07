@@ -13,7 +13,6 @@ class AnmPipeline:
     def __init__(self) -> None:
         uri = str(os.getenv('DB_URI')) + "?sslmode=require"
         self.engine = create_engine(uri, echo=True)
-        self.inspector = inspect(self.engine)
         
         self.tables = ['anime', 'episode']
         self._create_tables()
@@ -27,6 +26,7 @@ class AnmPipeline:
     def open_spider(self, spider):
         if not hasattr(self, 'dbsession'):
             self.dbsession = self.session()
+            print('\033[41m CONEXÃO ABERTA\033[m')
 
     def process_item(self, item, spider):
         try:
@@ -45,8 +45,9 @@ class AnmPipeline:
                 self.dbsession.add(ep)
                 self.dbsession.commit()
 
-        except PendingRollbackError:
-            self.dbsession.rollback()
+        except PendingRollbackError as e:
+            if hasattr(self, 'dbsession'):
+                self.dbsession.rollback()
         
         finally:
             return item
@@ -54,3 +55,4 @@ class AnmPipeline:
     def close_spider(self, spider):
         if hasattr(self, 'dbsession'):
             self.dbsession.close()
+            print('\033[42m CONEXÃO FECHADA \033[m')
