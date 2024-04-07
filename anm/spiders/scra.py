@@ -6,21 +6,6 @@ from datetime import datetime
 from itertools import count
 
 
-def treatments(*exceptions):
-    def inner(func):
-        def wrapper(*args, **kwargs):
-            try:
-                return func(*args, **kwargs)
-            except exceptions as e:
-                print(f"Erro durante a execução de '{func.__name__}': {e}")
-            except Exception as e:
-                print(f"Erro durante a execução de '{func.__name__}': {e}")
-        
-        return wrapper
-    return inner
-
-
-
 class AnimesScrapy(scrapy.Spider):
     name = 'animesonline'
     allowed_domains = ['animesonlinecc.to']
@@ -55,7 +40,7 @@ class AnimesScrapy(scrapy.Spider):
         title = response.xpath('//h1/text()').get()
         year = response.css('span.date::text').get()
         sinopse = response.css('div.resumotemp div.wp-content p::text').get()
-        rate = response.css('.dt_rating_vgs').get()
+        rate = response.css('.dt_rating_vgs::text').get()
 
         anime = AnmItem(
             id=anime_id,
