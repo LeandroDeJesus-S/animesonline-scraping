@@ -26,7 +26,7 @@ class AnmPipeline:
     def open_spider(self, spider):
         if not hasattr(self, 'dbsession'):
             self.dbsession = self.session()
-            print('\033[41m CONEXÃO ABERTA\033[m')
+            spider.logger.info('\033[41m CONEXÃO COM BANCO DE DADOS ABERTA\033[m')
 
     def process_item(self, item, spider):
         try:
@@ -46,6 +46,7 @@ class AnmPipeline:
                 self.dbsession.commit()
 
         except PendingRollbackError as e:
+            spider.logger.warning(f'\033[33m{e}\033[m')
             if hasattr(self, 'dbsession'):
                 self.dbsession.rollback()
         
@@ -55,4 +56,4 @@ class AnmPipeline:
     def close_spider(self, spider):
         if hasattr(self, 'dbsession'):
             self.dbsession.close()
-            print('\033[42m CONEXÃO FECHADA \033[m')
+            spider.logger.info('\033[42m CONEXÃO COM BANCO DE DADOS FECHADA \033[m')
