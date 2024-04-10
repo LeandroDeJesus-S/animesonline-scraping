@@ -2,7 +2,7 @@ import os
 from itemadapter import ItemAdapter
 from .items import AnmItem, EpItem
 from .models import Base, Anime, Ep
-from sqlalchemy import create_engine, inspect
+from sqlalchemy import create_engine, Select
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import PendingRollbackError
 from dotenv import load_dotenv
@@ -17,6 +17,8 @@ class AnmPipeline:
         self.tables = ['anime', 'episode']
         self._create_tables()
 
+        self._pending_eps = []
+
         self.session = sessionmaker(self.engine)
     
     def _create_tables(self):
@@ -27,6 +29,18 @@ class AnmPipeline:
         if not hasattr(self, 'dbsession'):
             self.dbsession = self.session()
             spider.logger.info('\033[41m CONEXÃO COM BANCO DE DADOS ABERTA\033[m')
+    
+    def close_spider(self, spider):
+        if hasattr(self, 'dbsession'):
+            self.dbsession.close()
+            spider.logger.info('\033[42m CONEXÃO COM BANCO DE DADOS FECHADA \033[m')
+
+    def _add_if_pending(self, anime, spider):
+        for ep in self._pending_eps:
+            if anime.id == ep.anime_id:
+                self.dbsession.add(ep)
+                self._pending_eps.remove(ep)
+                spider.logger.info(f'pending episode {ep.id} from anime {ep.anime_id} added')
 
     def process_item(self, item, spider):
         try:
@@ -34,16 +48,28 @@ class AnmPipeline:
                 anime = Anime(
                     **ItemAdapter(item).asdict()
                 )
+
                 self.dbsession.add(anime)
                 self.dbsession.commit()
+                
+                self._add_if_pending(anime, spider)
             
             elif isinstance(item, EpItem):
                 ep = Ep(
                     **ItemAdapter(item).asdict()
                 )
 
-                self.dbsession.add(ep)
-                self.dbsession.commit()
+                scalar = self.dbsession.execute(
+                    Select(Anime.id).where(Anime.id == ep.anime_id)
+                )
+                
+                if scalar.first() is not None:
+                    self.dbsession.add(ep)
+                    self.dbsession.commit()
+                
+                else:
+                    self._pending_eps.append(ep)
+                    spider.logger.info(f'episode {ep.id} from anime {ep.anime_id} pending')
 
         except PendingRollbackError as e:
             spider.logger.warning(f'\033[33m{e}\033[m')
@@ -52,8 +78,3 @@ class AnmPipeline:
         
         finally:
             return item
-
-    def close_spider(self, spider):
-        if hasattr(self, 'dbsession'):
-            self.dbsession.close()
-            spider.logger.info('\033[42m CONEXÃO COM BANCO DE DADOS FECHADA \033[m')
