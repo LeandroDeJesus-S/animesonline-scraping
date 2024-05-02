@@ -1,6 +1,17 @@
-from sqlalchemy.orm import declarative_base, DeclarativeBase
-from sqlalchemy import Column, String, Date, Integer, ForeignKey, UniqueConstraint, Float
+from sqlalchemy.orm import declarative_base, DeclarativeBase, validates
+from sqlalchemy import (
+    Column, 
+    String, 
+    Date, 
+    Integer, 
+    ForeignKey, 
+    UniqueConstraint, 
+    Float,
+    CheckConstraint,
+)
 from sqlalchemy.orm import relationship
+from datetime import datetime
+import re
 
 Base: DeclarativeBase = declarative_base()
 
@@ -19,7 +30,7 @@ class Anime(Base):
         nullable=False
     )
     year = Column(
-        String, 
+        Integer, 
         nullable=False
     )
     sinopse = Column(
@@ -45,8 +56,28 @@ class Anime(Base):
         back_populates='anime'
     )
 
+    __table_args__ = (
+        CheckConstraint('rate >= 0 AND rate <= 10', name='check_anime_rate_0_10'),
+    )
+
     def __repr__(self):
         return f'Anime({self.__dict__.items()})'
+    
+    @validates('year')
+    def validate_year(self, _, year):
+        assert 1900 < year <= datetime.today().year, 'invalid year'
+        return year
+    
+    @validates('url')
+    def validate_url(self, _, url):
+        assert bool(re.match(r'https\:\/\/animesonlinecc.to\/anime\/[\w-]+\/', url))
+        return url
+    
+    @validates('categories')
+    def validate_categories(self, _, categories):
+        assert bool(re.match(r'^[\w\s]+(?:,\s[\w\s]+)*$', categories)), 'invalid categories format'
+        return categories
+    
 
 
 class Ep(Base):
@@ -74,7 +105,7 @@ class Ep(Base):
         nullable=False
     )
     season = Column(
-        String, 
+        Integer, 
         nullable=False
     )
     url = Column(
@@ -94,7 +125,23 @@ class Ep(Base):
 
     __table_args__ = (
         UniqueConstraint('anime_id', 'season', 'number', 'url', name='unique_anm_ep_constraint'),
+        CheckConstraint('season > 0', name='check_ep_season_gt_0'),
     )
     
     def __repr__(self):
         return f'Ep({self.__dict__.items()})'
+    
+    @validates('url')
+    def validate_url(self, _, url):
+        assert bool(
+            re.match(
+                r'https\:\/\/animesonlinecc.to\/episodio\/[\w-]+\d*\-episodio-[1-9]+\/', 
+                url
+            )
+        ), 'invalid ep url'
+        return url
+
+    @validates('date')
+    def validate_date(self, _, date):
+        assert datetime(1900, 1, 1).date() < date <= datetime.today().date()
+        return date

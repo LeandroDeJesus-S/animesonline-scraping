@@ -45,24 +45,24 @@ class AnimesScrapy(scrapy.Spider):
             id=next(self.global_anime_id),
             categories=categories,
             name=title,
-            year=year,
+            year=int(year),
             sinopse=sinopse,
             url=response.url,
-            rate=rate
+            rate=float(rate) if rate is not None else 0.0
         )
         yield anime
-
+        
         seasons = response.css('div.se-c')
         for i, season in enumerate(seasons, start=1):
             for ep in season.css('div.episodiotitle'):
                 number = ep.css('a::text').get().replace('Episodio ', '')
                 url = ep.css('a::attr(href)').get()
                 date = ep.css('span::text').get()
-                date = datetime.strptime(date, '%b. %d, %Y')
+                date = datetime.strptime(date, '%b. %d, %Y').date()
 
                 ep_item = EpItem(
                     id=next(self.gloabl_ep_id),
-                    anime_id=anime.id,
+                    anime_id=anime['id'],
                     number=number,
                     url=url,
                     date=date,
