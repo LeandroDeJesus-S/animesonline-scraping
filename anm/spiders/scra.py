@@ -24,7 +24,6 @@ class AnimesScrapy(scrapy.Spider):
             yield scrapy.Request(
                 url,
                 callback=self.parser_anime,
-                cb_kwargs={'anime_id': next(self.global_anime_id)}
             )
         
         next_page = response.xpath('//a[@class="arrow_pag"]/@href').getall()
@@ -32,7 +31,7 @@ class AnimesScrapy(scrapy.Spider):
             self.logger.debug(f'there is next page')
             yield response.follow(next_page[-1], callback=self.parse)
     
-    def parser_anime(self, response: Response, anime_id: int):
+    def parser_anime(self, response: Response):
         """
         Extrai os dados do anime como, por exemplo, titulo, ano, sinopse, episódios, etc.
         """
@@ -43,7 +42,7 @@ class AnimesScrapy(scrapy.Spider):
         rate = response.css('.dt_rating_vgs::text').get()
 
         anime = AnmItem(
-            id=anime_id,
+            id=next(self.global_anime_id),
             categories=categories,
             name=title,
             year=year,
@@ -63,7 +62,7 @@ class AnimesScrapy(scrapy.Spider):
 
                 ep_item = EpItem(
                     id=next(self.gloabl_ep_id),
-                    anime_id=anime_id,
+                    anime_id=anime.id,
                     number=number,
                     url=url,
                     date=date,
