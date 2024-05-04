@@ -77,7 +77,7 @@ class Anime(Base):
     def validate_categories(self, _, categories):
         assert bool(
             re.match(
-                r'^[\w\s]+(?:,\s[\w\s]+)*$', 
+                r'^[\+\w]+(?:, [\+\w, ]+)*\S$', 
                 categories
             )
         ), f'invalid categories format {categories}'
