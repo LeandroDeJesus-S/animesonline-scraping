@@ -65,17 +65,22 @@ class Anime(Base):
     
     @validates('year')
     def validate_year(self, _, year):
-        assert 1900 < year <= datetime.today().year, 'invalid year'
+        assert 1900 < year <= datetime.today().year, f'invalid year {year}'
         return year
     
     @validates('url')
     def validate_url(self, _, url):
-        assert bool(re.match(r'https\:\/\/animesonlinecc.to\/anime\/[\w-]+\/', url))
+        assert bool(re.match(r'https\:\/\/animesonlinecc.to\/anime\/[\w-]+\/', url)), f'invalid url anime {url}'
         return url
     
     @validates('categories')
     def validate_categories(self, _, categories):
-        assert bool(re.match(r'^[\w\s]+(?:,\s[\w\s]+)*$', categories)), 'invalid categories format'
+        assert bool(
+            re.match(
+                r'^[\w\s]+(?:,\s[\w\s]+)*$', 
+                categories
+            )
+        ), f'invalid categories format {categories}'
         return categories
     
 
@@ -138,10 +143,10 @@ class Ep(Base):
                 r'https\:\/\/animesonlinecc.to\/episodio\/[\w-]+\d*\-episodio-[1-9]+\/', 
                 url
             )
-        ), 'invalid ep url'
+        ), f'invalid ep url {url}'
         return url
 
     @validates('date')
     def validate_date(self, _, date):
-        assert datetime(1900, 1, 1).date() < date <= datetime.today().date()
+        assert datetime(1900, 1, 1).date() < date <= datetime.today().date(), f'invalid date {date}'
         return date

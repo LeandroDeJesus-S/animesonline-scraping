@@ -51,7 +51,7 @@ class AnmPipeline:
 
                 self.dbsession.add(anime)
                 self.dbsession.commit()
-                spider.logger.info(f'{anime} adicionado na base de dados')
+                spider.logger.info(f'{anime.name} adicionado na base de dados')
                 
                 self._add_if_pending(anime, spider)
             
@@ -67,7 +67,7 @@ class AnmPipeline:
                 if scalar.first() is not None:
                     self.dbsession.add(ep)
                     self.dbsession.commit()
-                    spider.logger.info(f'{ep} adicionado na base de dados')
+                    spider.logger.info(f'{ep.url} adicionado na base de dados')
                 
                 else:
                     self._pending_eps.append(ep)
