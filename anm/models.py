@@ -140,7 +140,7 @@ class Ep(Base):
     def validate_url(self, _, url):
         assert bool(
             re.match(
-                r'https\:\/\/animesonlinecc.to\/episodio\/[\w-]+\d*\-episodio-[1-9]\d*\/', 
+                r'https\:\/\/animesonlinecc.to\/episodio\/[\w-]+\d*\-episodio-\d+\/', 
                 url
             )
         ), f'invalid ep url {url}'
