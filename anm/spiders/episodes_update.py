@@ -68,7 +68,7 @@ class EpUpdaterSpider(scrapy.Spider):
 
             new_ep = Ep(
                 id=next(self.ep_id),
-                anime_id=kwargs.get('uid'),
+                anime_id=kwargs.get('aid'),
                 number=number,
                 url=url,
                 date=date,
